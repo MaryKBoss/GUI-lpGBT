@@ -1,13 +1,19 @@
-import sys
+from PyQt5.QtWidgets import *
 from PyQt5 import QtCore, QtGui, QtWidgets
-from LpGBT_functions_two import *
+from xml.dom import minidom
 
-
-class Ui_Dialog(object):
+class Ui_Dialog(QWidget):
 
     def __init__(self, TDC_inst):
+        super().__init__()
         self.TDC_inst = TDC_inst
         self.checkbox_list = []
+        self.freq_list = []
+        self.ds_list = []
+        self.PE_s_list = []
+        self.PE_m_list = []
+        self.PE_w_list = []
+        self.add_and_reg = []
 
     def setupUi(self, Dialog):
 
@@ -45,9 +51,12 @@ class Ui_Dialog(object):
             self.gridLayout.addWidget(self.label_3, row_freq, column, 1, 1)
 
             self.checkBox = QtWidgets.QCheckBox(self.gridLayoutWidget)
+            # self.checkBox.setObjectName("inv")
             self.gridLayout.addWidget(self.checkBox, row_freq, column_two, 1, 1)
-            # self.checkBox.stateChanged.connect(wr)
             self.checkbox_list.append(self.checkBox)
+            self.checkBox.address = 108 + 2*i
+            self.checkBox.toggled.connect(self.return_byte)
+            #self.checkBox.toggled.connect(write(address, self.return_byte))        # write the address and the value here!
 
             self.label_2 = QtWidgets.QLabel(self.gridLayoutWidget)
             self.label_2.setText("Frequency:")
@@ -55,16 +64,20 @@ class Ui_Dialog(object):
             self.label_2.setFixedSize(QtCore.QSize(EPCLK_label_width, EPCLK_label_height))
             self.gridLayout.addWidget(self.label_2, row_freq + 1, column, 1, 1)
 
-            freq_box = QtWidgets.QComboBox(self.gridLayoutWidget)
-            freq_box.addItem("off")
-            freq_box.addItem("40")
-            freq_box.addItem("80")
-            freq_box.addItem("160")
-            freq_box.addItem("320")
-            freq_box.addItem("640")
-            freq_box.addItem("1280")
-            freq_box.setFont(QtGui.QFont("Arial", 7))
-            self.gridLayout.addWidget(freq_box, row_freq + 1, column_two, 1, 1)
+            self.freq_box = QtWidgets.QComboBox(self.gridLayoutWidget)
+            # self.freq_box.setObjectName("freq")
+            self.freq_box.addItem("off")
+            self.freq_box.addItem("40")
+            self.freq_box.addItem("80")
+            self.freq_box.addItem("160")
+            self.freq_box.addItem("320")
+            self.freq_box.addItem("640")
+            self.freq_box.addItem("1280")
+            self.freq_box.setFont(QtGui.QFont("Arial", 7))
+            self.gridLayout.addWidget(self.freq_box, row_freq + 1, column_two, 1, 1)
+            self.freq_list.append(self.freq_box)
+            self.freq_box.address = 108 + 2*i
+            self.freq_box.currentIndexChanged.connect(self.return_byte)
 
             self.label_4 = QtWidgets.QLabel(self.gridLayoutWidget)
             self.label_4.setText("Drive Strength:")
@@ -72,17 +85,21 @@ class Ui_Dialog(object):
             self.label_4.setFixedSize(QtCore.QSize(EPCLK_label_width, EPCLK_label_height))
             self.gridLayout.addWidget(self.label_4, row_freq + 2, column, 1, 1)
 
-            drive_strength = QtWidgets.QComboBox(self.gridLayoutWidget)
-            drive_strength.addItem("0")
-            drive_strength.addItem("1.0")
-            drive_strength.addItem("1.5")
-            drive_strength.addItem("2.0")
-            drive_strength.addItem("2.5")
-            drive_strength.addItem("3.0")
-            drive_strength.addItem("3.5")
-            drive_strength.addItem("4.0")
-            drive_strength.setFont(QtGui.QFont("Arial", 7))
-            self.gridLayout.addWidget(drive_strength, row_freq + 2, column_two, 1, 1)
+            self.drive_strength = QtWidgets.QComboBox(self.gridLayoutWidget)
+            # self.drive_strength.setObjectName("ds")
+            self.drive_strength.addItem("0")
+            self.drive_strength.addItem("1.0")
+            self.drive_strength.addItem("1.5")
+            self.drive_strength.addItem("2.0")
+            self.drive_strength.addItem("2.5")
+            self.drive_strength.addItem("3.0")
+            self.drive_strength.addItem("3.5")
+            self.drive_strength.addItem("4.0")
+            self.drive_strength.setFont(QtGui.QFont("Arial", 7))
+            self.gridLayout.addWidget(self.drive_strength, row_freq + 2, column_two, 1, 1)
+            self.ds_list.append(self.drive_strength)
+            self.drive_strength.address = 108 + 2 * i
+            self.drive_strength.currentIndexChanged.connect(self.return_byte)
 
             self.label_5 = QtWidgets.QLabel(self.gridLayoutWidget)
             self.label_5.setText("PE strength:")
@@ -90,17 +107,20 @@ class Ui_Dialog(object):
             self.label_5.setFixedSize(QtCore.QSize(EPCLK_label_width, EPCLK_label_height))
             self.gridLayout.addWidget(self.label_5, row_freq + 3, column, 1, 1)
 
-            PE_strength = QtWidgets.QComboBox(self.gridLayoutWidget)
-            PE_strength.addItem("0")
-            PE_strength.addItem("1.0")
-            PE_strength.addItem("1.5")
-            PE_strength.addItem("2.0")
-            PE_strength.addItem("2.5")
-            PE_strength.addItem("3.0")
-            PE_strength.addItem("3.5")
-            PE_strength.addItem("4.0")
-            PE_strength.setFont(QtGui.QFont("Arial", 7))
-            self.gridLayout.addWidget(PE_strength, row_freq + 3, column_two, 1, 1)
+            self.PE_strength = QtWidgets.QComboBox(self.gridLayoutWidget)
+            self.PE_strength.addItem("0")
+            self.PE_strength.addItem("1.0")
+            self.PE_strength.addItem("1.5")
+            self.PE_strength.addItem("2.0")
+            self.PE_strength.addItem("2.5")
+            self.PE_strength.addItem("3.0")
+            self.PE_strength.addItem("3.5")
+            self.PE_strength.addItem("4.0")
+            self.PE_strength.setFont(QtGui.QFont("Arial", 7))
+            self.gridLayout.addWidget(self.PE_strength, row_freq + 3, column_two, 1, 1)
+            self.PE_s_list.append(self.PE_strength)
+            self.PE_strength.address = 109 + 2*i
+            self.PE_strength.currentIndexChanged.connect(self.return_byte_2)
 
             self.label_6 = QtWidgets.QLabel(self.gridLayoutWidget)
             self.label_6.setText("PE Mode:")
@@ -108,13 +128,16 @@ class Ui_Dialog(object):
             self.label_6.setFixedSize(QtCore.QSize(EPCLK_label_width, EPCLK_label_height))
             self.gridLayout.addWidget(self.label_6, row_freq + 4, column, 1, 1)
 
-            PE_mode = QtWidgets.QComboBox(self.gridLayoutWidget)
-            PE_mode.addItem("disabled")
-            PE_mode.addItem("disabled")
-            PE_mode.addItem("self timed")
-            PE_mode.addItem("clock timed")
-            PE_mode.setFont(QtGui.QFont("Arial", 7))
-            self.gridLayout.addWidget(PE_mode, row_freq + 4, column_two, 1, 1)
+            self.PE_mode = QtWidgets.QComboBox(self.gridLayoutWidget)
+            self.PE_mode.addItem("disabled")
+            self.PE_mode.addItem("disabled")
+            self.PE_mode.addItem("self timed")
+            self.PE_mode.addItem("clock timed")
+            self.PE_mode.setFont(QtGui.QFont("Arial", 7))
+            self.gridLayout.addWidget(self.PE_mode, row_freq + 4, column_two, 1, 1)
+            self.PE_m_list.append(self.PE_mode)
+            self.PE_mode.address = 109 + 2*i
+            self.PE_mode.currentIndexChanged.connect(self.return_byte_2)
 
             self.label_7 = QtWidgets.QLabel(self.gridLayoutWidget)
             self.label_7.setText("PE Width:")
@@ -122,17 +145,20 @@ class Ui_Dialog(object):
             self.label_7.setFixedSize(QtCore.QSize(EPCLK_label_width, EPCLK_label_height))
             self.gridLayout.addWidget(self.label_7, row_freq + 5, column, 1, 1)
 
-            PE_width = QtWidgets.QComboBox(self.gridLayoutWidget)
-            PE_width.addItem("120")
-            PE_width.addItem("240")
-            PE_width.addItem("360")
-            PE_width.addItem("480")
-            PE_width.addItem("600")
-            PE_width.addItem("720")
-            PE_width.addItem("840")
-            PE_width.addItem("960")
-            PE_width.setFont(QtGui.QFont("Arial", 7))
-            self.gridLayout.addWidget(PE_width, row_freq + 5, column_two, 1, 1)
+            self.PE_width = QtWidgets.QComboBox(self.gridLayoutWidget)
+            self.PE_width.addItem("120")
+            self.PE_width.addItem("240")
+            self.PE_width.addItem("360")
+            self.PE_width.addItem("480")
+            self.PE_width.addItem("600")
+            self.PE_width.addItem("720")
+            self.PE_width.addItem("840")
+            self.PE_width.addItem("960")
+            self.PE_width.setFont(QtGui.QFont("Arial", 7))
+            self.gridLayout.addWidget(self.PE_width, row_freq + 5, column_two, 1, 1)
+            self.PE_w_list.append(self.PE_width)
+            self.PE_width.currentIndexChanged.connect(self.return_byte_2)
+            self.PE_width.address = 109 + 2*i
 
             column += 2
             column_two += 2
@@ -155,89 +181,161 @@ class Ui_Dialog(object):
         self.verticalLayout.addWidget(self.pushButton)
         self.pushButton.clicked.connect(Dialog.reject)
 
-    def save(self):
-        # define parameters
-        self.clocks = 29
-        self.EPCLK = 4
-        invert_val = 0
-        drive_strength_val = 1
-        freq_val = 2
-        PE_strength_val = 3
-        PE_mode_val = 4
-        PE_width_val = 5
-        column = 0
-        column_two = 1
-        row_freq = 1
+###################################################################################################################
+    # for individual changes!
 
-        # setup lists
-        self.checkBox_data = []
-        self.frequency_data = []
-        self.drive_strength_data = []
-        self.PE_strength_data = []
-        self.PE_mode_data = []
-        self.PE_width_data = []
+    def return_byte(self):       #This works for all the inv, ds, freq registers
+        sender = self.sender()
+        address = sender.address
+        for inv, ds, freq in zip(self.checkbox_list, self.ds_list, self.freq_list):
+            if sender in (inv, ds, freq):
+                # get invert binary
+                if inv.isChecked():
+                    inv_bin = 1
+                else:
+                    inv_bin = 0
+                # get drive strength binary
+                ds_bin = bin(ds.currentIndex()).replace("0b", "")
+                ds_bin = ds_bin[::-1]
+                while len(ds_bin) < 3:
+                    ds_bin += '0'
+                ds_bin = ds_bin[::-1]
+                # get frequency binary
+                freq_bin = bin(freq.currentIndex()).replace("0b", "")
+                freq_bin = freq_bin[::-1]
+                while len(freq_bin) < 3:
+                    freq_bin += '0'
+                freq_bin = freq_bin[::-1]
 
-        # loop over EPCLKs
-        for i in range(self.clocks):
-            if column == 16:
-                column = 0
-                column_two = 1
-                row_freq += 7
-            # Check Box saving
-            # check_box = self.gridLayout.itemAtPosition(row_freq, column_two).widget()
-            if self.checkbox_list[i].isChecked():
-                self.checkBox_data.append([self.EPCLK, i, invert_val, '1'])
+                register_bin_value = (str(inv_bin) + ds_bin + freq_bin)
+                register_int_value = int(register_bin_value, 2)
+                # print(register_bin_value)
+                # print(register_int_value)
+
+                print("Address %s : value %s" % (address, register_int_value))
+                return address, register_int_value
+
+    def return_byte_2(self):        # This works for all PE_strength, PS_mode, and PE_width registers
+        sender = self.sender()
+        address = sender.address
+        # print(sender)
+        # print(address)
+
+        for PE_s, PE_m, PE_w in zip(self.PE_s_list, self.PE_m_list, self.PE_w_list):
+            if sender in (PE_s, PE_m, PE_w):
+                #get PE_s binary
+                PE_s_bin = bin(PE_s.currentIndex()).replace("0b", "")
+                PE_s_bin = PE_s_bin[::-1]
+                while len(PE_s_bin) < 3:
+                    PE_s_bin += '0'
+                PE_s_bin = PE_s_bin[::-1]
+
+                # get PE_m binary
+                PE_m_bin = bin(PE_m.currentIndex()).replace("0b", "")
+                PE_m_bin = PE_m_bin[::-1]
+                while len(PE_m_bin) < 2:
+                    PE_m_bin += '0'
+                PE_m_bin = PE_m_bin[::-1]
+
+                # get PE_w binary
+                PE_w_bin = bin(PE_w.currentIndex()).replace("0b", "")
+                PE_w_bin = PE_w_bin[::-1]
+                while len(PE_w_bin) < 3:
+                    PE_w_bin += '0'
+                PE_w_bin = PE_w_bin[::-1]
+
+                register_bin_value = (PE_s_bin + PE_m_bin + PE_w_bin)
+                register_int_value = int(register_bin_value, 2)
+                # print(register_bin_value)
+                # print(register_int_value)
+
+                print("Address %s : value %s" % (address, register_int_value))
+                return address, register_int_value
+
+##############################################################################################################
+
+    def save(self):         # Save all of the parameters on the page!
+        print("Save all page parameters")
+        i = 0
+        for inv, ds, freq in zip(self.checkbox_list, self.ds_list, self.freq_list):
+            address = 108 + 2*i
+            # get invert binary
+            if inv.isChecked():
+                inv_bin = 1
             else:
-                self.checkBox_data.append([self.EPCLK, i, invert_val, '0'])
+                inv_bin = 0
+            # get drive strength binary
+            ds_bin = bin(ds.currentIndex()).replace("0b", "")
+            ds_bin = ds_bin[::-1]
+            while len(ds_bin) < 3:
+                ds_bin += '0'
+            ds_bin = ds_bin[::-1]
+            # get frequency binary
+            freq_bin = bin(freq.currentIndex()).replace("0b", "")
+            freq_bin = freq_bin[::-1]
+            while len(freq_bin) < 3:
+                freq_bin += '0'
+            freq_bin = freq_bin[::-1]
 
-            # frequency saving
-            freq_box = self.gridLayout.itemAtPosition(row_freq + 1, column_two).widget()
-            self.frequency_data.append([self.EPCLK, i, freq_val, freq_box.currentIndex()])
+            register_bin_value = (str(inv_bin) + ds_bin + freq_bin)
+            register_int_value = int(register_bin_value, 2)
+            print("Address %s : value %s" % (address, register_int_value))
+            self.add_and_reg.append([address, register_int_value])
 
-            # drive strength saving
-            drive_strength_box = self.gridLayout.itemAtPosition(row_freq + 2, column_two).widget()
-            self.drive_strength_data.append([self.EPCLK, i, drive_strength_val, drive_strength_box.currentIndex()])
+            # Then here do:
+            # write(address, register_int_value)
 
-            # PE strength saving
-            PE_strength_box = self.gridLayout.itemAtPosition(row_freq + 3, column_two).widget()
-            self.PE_strength_data.append([self.EPCLK, i, PE_strength_val, PE_strength_box.currentIndex()])
+            i += 1
 
-            # PE mode saving
-            PE_mode_box = self.gridLayout.itemAtPosition(row_freq + 4, column_two).widget()
-            self.PE_mode_data.append([self.EPCLK, i, PE_mode_val, PE_mode_box.currentIndex()])
+        i = 0
+        for PE_s, PE_m, PE_w in zip(self.PE_s_list, self.PE_m_list, self.PE_w_list):
+            address = 109 + 2*i
+            PE_s_bin = bin(PE_s.currentIndex()).replace("0b", "")
+            PE_s_bin = PE_s_bin[::-1]
+            while len(PE_s_bin) < 3:
+                PE_s_bin += '0'
+            PE_s_bin = PE_s_bin[::-1]
 
-            # PE width saving
-            PE_width_box = self.gridLayout.itemAtPosition(row_freq + 5, column_two).widget()
-            self.PE_width_data.append([self.EPCLK, i, PE_width_val, PE_width_box.currentIndex()])
+            # get PE_m binary
+            PE_m_bin = bin(PE_m.currentIndex()).replace("0b", "")
+            PE_m_bin = PE_m_bin[::-1]
+            while len(PE_m_bin) < 2:
+                PE_m_bin += '0'
+            PE_m_bin = PE_m_bin[::-1]
 
-            column += 2
-            column_two += 2
+            # get PE_w binary
+            PE_w_bin = bin(PE_w.currentIndex()).replace("0b", "")
+            PE_w_bin = PE_w_bin[::-1]
+            while len(PE_w_bin) < 3:
+                PE_w_bin += '0'
+            PE_w_bin = PE_w_bin[::-1]
 
-        # print("invert data: \n %s" % self.checkBox_data)
-        # print("Frequency data \n %s" % self.frequency_data)
-        # print("drive strength data: \n %s" % self.drive_strength_data)
-        # print("PE strength data: \n %s" % self.PE_strength_data)
-        # print("PE mode data: \n %s" % self.PE_mode_data)
-        # print("PE width data: \n %s " % self.PE_width_data)
+            register_bin_value = (PE_s_bin + PE_m_bin + PE_w_bin)
+            register_int_value = int(register_bin_value, 2)
+            # print(register_bin_value)
+            # print(register_int_value)
 
-        for inv, freq, ds, PE_w, PE_m, PE_s in zip(self.checkBox_data, self.frequency_data, self.drive_strength_data,
-                                             self.PE_width_data, self.PE_mode_data, self.PE_strength_data):
-            # print(register_sub[1])
-            function(inv[0], inv[1], inv[2], inv[3])
-            function(ds[0], ds[1], ds[2], ds[3])
-            function(freq[0], freq[1], freq[2], freq[3])
+            print("Address %s : value %s" % (address, register_int_value))
+            self.add_and_reg.append([address, register_int_value])
 
-            function(PE_w[0], PE_w[1], PE_w[2], PE_w[3])
-            function(PE_m[0], PE_m[1], PE_m[2], PE_m[3])
-            function(PE_s[0], PE_s[1], PE_s[2], PE_s[3])
+            # Then here do:
+            # write(address, register_int_value)
+            i += 1
 
-        print("EPCLK registers' addresses and values : \n %s " % add_and_reg)
-        print(" END OF RUN ")
-        post_function()
+        list_to_xml = sorted(self.add_and_reg, key=lambda x: (x[0]))
+        # print(list_to_xml)
 
+        # getting the xml file
+        root = minidom.Document()
+        xml = root.createElement('root')
+        root.appendChild(xml)
 
-    # def values(self):
-    #     # self.checkBox_transfer = self.checkBox_data
-    #     self.ploppppp = 3
-    #     print(self.ploppppp)
+        for user in list_to_xml:
+            productChild = root.createElement(str(user[0]))
+            productChild.setAttribute('val', str(user[1]))
+            xml.appendChild(productChild)
 
+        xml_str = root.toprettyxml(indent="\t")
+        save_path_file = "save_lpgbt.xml"
+        with open(save_path_file, "w") as f:
+            f.write(xml_str)
