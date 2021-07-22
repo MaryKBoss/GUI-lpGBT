@@ -1,19 +1,17 @@
-# -*- coding: utf-8 -*-
-
-# Form implementation generated from reading ui file 'Equalizer.ui'
-#
-# Created by: PyQt5 UI code generator 5.14.2
-#
-# WARNING! All changes made in this file will be lost!
-
-from PyQt5 import QtCore, QtGui, QtWidgets
 import xml.etree.ElementTree as ET
 from LpGBT_functions_two import *
+from PyQt5.QtWidgets import *
+from PyQt5 import QtCore, QtGui, QtWidgets
+from xml.dom import minidom
+import xml.etree.ElementTree as ET
 
-class Ui_Dialog(object):
+class Ui_Dialog(QWidget):
 
     def __init__(self, TDC_inst):
+        super().__init__()
         self.TDC_inst = TDC_inst
+        self.add_and_reg = []
+        self.address = 0
 
     def setupUi(self, Dialog):
 
@@ -45,40 +43,60 @@ class Ui_Dialog(object):
         self.label_4 = QtWidgets.QLabel(self.gridLayoutWidget)
         self.label_4.setText("Resistance 2 (kOhm):")
         self.gridLayout.addWidget(self.label_4, 3, 0, 1, 1)
+
         self.comboBox = QtWidgets.QComboBox(self.gridLayoutWidget)
         self.comboBox.addItem("1/3")
         self.comboBox.addItem("2/3")
         self.comboBox.addItem("1/1")
+        self.comboBox.address = 55
         self.gridLayout.addWidget(self.comboBox, 0, 1, 1, 1)
+        self.comboBox.currentIndexChanged.connect(self.return_byte)
+
         self.comboBox_2 = QtWidgets.QComboBox(self.gridLayoutWidget)
         self.comboBox_2.addItem("0")
         self.comboBox_2.addItem("70")
+        self.comboBox_2.addItem("70")
         self.comboBox_2.addItem("140")
+        self.comboBox_2.address = 55
         self.gridLayout.addWidget(self.comboBox_2, 1, 1, 1, 1)
+        self.comboBox_2.currentIndexChanged.connect(self.return_byte)
+
         self.comboBox_3 = QtWidgets.QComboBox(self.gridLayoutWidget)
         self.comboBox_3.addItem("0")
         self.comboBox_3.addItem("0.4")
         self.comboBox_3.addItem("1.0")
         self.comboBox_3.addItem("1.6")
+        self.comboBox_3.address = 56
         self.gridLayout.addWidget(self.comboBox_3, 2, 1, 1, 1)
+        self.comboBox_3.currentIndexChanged.connect(self.return_byte_2)
+
         self.comboBox_7 = QtWidgets.QComboBox(self.gridLayoutWidget)
         self.comboBox_7.addItem("0")
         self.comboBox_7.addItem("0.6")
         self.comboBox_7.addItem("1.2")
         self.comboBox_7.addItem("2.4")
+        self.comboBox_7.address = 56
         self.gridLayout.addWidget(self.comboBox_7, 3, 1, 1, 1)
+        self.comboBox_7.currentIndexChanged.connect(self.return_byte_2)
+
         self.comboBox_8 = QtWidgets.QComboBox(self.gridLayoutWidget)
         self.comboBox_8.addItem("0")
         self.comboBox_8.addItem("3.0")
         self.comboBox_8.addItem("4.9")
         self.comboBox_8.addItem("7.1")
+        self.comboBox_8.address = 56
         self.gridLayout.addWidget(self.comboBox_8, 4, 1, 1, 1)
+        self.comboBox_8.currentIndexChanged.connect(self.return_byte_2)
+
         self.comboBox_9 = QtWidgets.QComboBox(self.gridLayoutWidget)
         self.comboBox_9.addItem("0")
         self.comboBox_9.addItem("3.0")
         self.comboBox_9.addItem("4.9")
         self.comboBox_9.addItem("7.1")
+        self.comboBox_9.address = 56
         self.gridLayout.addWidget(self.comboBox_9, 5, 1, 1, 1)
+        self.comboBox_9.currentIndexChanged.connect(self.return_byte_2)
+
         self.label_7 = QtWidgets.QLabel(Dialog)
         self.label_7.setGeometry(QtCore.QRect(30, 20, 181, 21))
         self.label_7.setText("Equalizer: ")
@@ -101,158 +119,85 @@ class Ui_Dialog(object):
         self.horizontalLayout.addWidget(self.pushButton_3)
         self.pushButton_3.clicked.connect(Dialog.reject)
 
-        ## testing
-        # self.comboBox_9.setCurrentIndex(2)
+################################################################
 
-        # ################## xml loading ######################
-        # # attenuation
-        # if root[6][0].text == '0x0':
-        #     self.comboBox.setCurrentIndex(0)
-        # if root[6][0].text == '0x1':
-        #     self.comboBox.setCurrentIndex(1)
-        # if root[6][0].text == '0x3':
-        #     self.comboBox.setCurrentIndex(2)
-        #
-        # # Capacitance
-        # if root[6][1].text == '0x0':
-        #     self.comboBox_2.setCurrentIndex(0)
-        # if root[6][1].text == '0x1':
-        #     self.comboBox_2.setCurrentIndex(1)
-        # if root[6][1].text == '0x3':
-        #     self.comboBox_3.setCurrentIndex(2)
-        #
-        # # Resistance 3
-        # if root[6][2].text == '0x0':
-        #     self.comboBox_3.setCurrentIndex(0)
-        # if root[6][2].text == '0x1':
-        #     self.comboBox_3.setCurrentIndex(1)
-        # if root[6][2].text == '0x2':
-        #     self.comboBox_3.setCurrentIndex(2)
-        # if root[6][2].text == '0x3':
-        #     self.comboBox_3.setCurrentIndex(3)
-        #
-        # # Resistance 2
-        # if root[6][3].text == '0x0':
-        #     self.comboBox_7.setCurrentIndex(0)
-        # if root[6][3].text == '0x1':
-        #     self.comboBox_7.setCurrentIndex(1)
-        # if root[6][3].text == '0x2':
-        #     self.comboBox_7.setCurrentIndex(2)
-        # if root[6][3].text == '0x3':
-        #     self.comboBox_7.setCurrentIndex(3)
-        #
-        # # Resistance 1
-        # if root[6][4].text == '0x0':
-        #     self.comboBox_8.setCurrentIndex(0)
-        # if root[6][4].text == '0x1':
-        #     self.comboBox_8.setCurrentIndex(1)
-        # if root[6][4].text == '0x2':
-        #     self.comboBox_8.setCurrentIndex(2)
-        # if root[6][4].text == '0x3':
-        #     self.comboBox_8.setCurrentIndex(3)
-        #
-        # # Resistance 0
-        # if root[6][5].text == '0x0':
-        #     self.comboBox_9.setCurrentIndex(0)
-        # if root[6][5].text == '0x1':
-        #     self.comboBox_9.setCurrentIndex(1)
-        # if root[6][5].text == '0x2':
-        #     self.comboBox_9.setCurrentIndex(2)
-        # if root[6][5].text == '0x3':
-        #     self.comboBox_9.setCurrentIndex(3)
+    def return_byte(self):
+        sender = self.sender()
+        self.address = sender.address
+
+        self.function_for_reg55()
+
+    def return_byte_2(self):
+        sender = self.sender()
+        self.address = sender.address
+
+        self.function_for_reg56()
 
     def save(self):
-        self.Equalizer = 6
-        self.attenuation_val = 0
-        self.EQCap_val = 1
-        self.EQRes3_val = 2
-        self.EQRes2_val = 3
-        self.EQRes1_val = 4
-        self.EQRes0_val = 5
+        print("save all page parameters")
 
-        self.atten_data = [self.Equalizer, 0, self.attenuation_val, self.comboBox.currentIndex()]
-        self.EQCap_data = [self.Equalizer, 0, self.EQCap_val, self.comboBox_2.currentIndex()]
-        self.EQRes3_data = [self.Equalizer, 0, self.EQRes3_val, self.comboBox_3.currentIndex()]
-        self.EQRes2_data = [self.Equalizer, 0, self.EQRes2_val, self.comboBox_7.currentIndex()]
-        self.EQRes1_data = [self.Equalizer, 0, self.EQRes1_val, self.comboBox_8.currentIndex()]
-        self.EQRes0_data = [self.Equalizer, 0, self.EQRes0_val, self.comboBox_9.currentIndex()]
+        #  register 55
+        self.address = 55
+        self.function_for_reg55()
+        self.add_and_reg.append([self.function_for_reg55()[0], self.function_for_reg55()[1]])
+        #register 56
+        self.address = 56
+        self.function_for_reg56()
+        self.add_and_reg.append([self.function_for_reg56()[0], self.function_for_reg56()[1]])
 
-        function(self.atten_data[0], self.atten_data[1], self.atten_data[2], self.atten_data[3])
-        function(self.EQCap_data[0], self.EQCap_data[1], self.EQCap_data[2], self.EQCap_data[3])
-        function(self.EQRes3_data[0], self.EQRes3_data[1], self.EQRes3_data[2], self.EQRes3_data[3])
-        function(self.EQRes2_data[0], self.EQRes2_data[1], self.EQRes2_data[2], self.EQRes2_data[3])
-        function(self.EQRes1_data[0], self.EQRes1_data[1], self.EQRes1_data[2], self.EQRes1_data[3])
-        function(self.EQRes0_data[0], self.EQRes0_data[1], self.EQRes0_data[2], self.EQRes0_data[3])
+        #xml file - work on adding to the existing xml and sort it!
+        tree_ePortTX = ET.parse('registers.xml')
+        root = tree_ePortTX.getroot()
 
-        print("Equalizer's registers addresses and values \n %s:" % add_and_reg)
-        post_function()
+        root[55].set('value', '%i' % self.function_for_reg55()[1])
+        root[56].set('value', '%i' % self.function_for_reg56()[1])
 
+        tree_ePortTX.write('registers_changed.xml')
 
-        # print("in progress")
-        # import xml.etree.ElementTree as ET
-        # # tree_ePortTX = ET.parse('LpGBT_auto_saved.xml')
-        # tree_ePortTX = ET.parse('LpGBT_transfer.xml')
-        # root = tree_ePortTX.getroot()
-        #
-        # #attenuation
-        # if self.comboBox.currentIndex() == 0:
-        #     root[6][0].text = '0x0'
-        # if self.comboBox.currentIndex() == 1:
-        #     root[6][0].text = '0x1'
-        # if self.comboBox.currentIndex() == 2:
-        #     root[6][0].text = '0x3'
-        #
-        # #Capacitance
-        # if self.comboBox_2.currentIndex() == 0:
-        #     root[6][1].text = '0x0'
-        # if self.comboBox_2.currentIndex() == 1:
-        #     root[6][1].text = '0x1'
-        # if self.comboBox_2.currentIndex() == 2:
-        #     root[6][1].text = '0x3'
-        #
-        #
-        # #Resistance 3
-        # if self.comboBox_3.currentIndex() == 0:
-        #     root[6][2].text = '0x0'
-        # if self.comboBox_3.currentIndex() == 1:
-        #     root[6][2].text = '0x1'
-        # if self.comboBox_3.currentIndex() == 2:
-        #     root[6][2].text = '0x2'
-        # if self.comboBox_3.currentIndex() == 3:
-        #     root[6][2].text = '0x3'
-        #
-        # # Resistance 2
-        # if self.comboBox_7.currentIndex() == 0:
-        #     root[6][3].text = '0x0'
-        # if self.comboBox_7.currentIndex() == 1:
-        #     root[6][3].text = '0x1'
-        # if self.comboBox_7.currentIndex() == 2:
-        #     root[6][3].text = '0x2'
-        # if self.comboBox_7.currentIndex() == 3:
-        #     root[6][3].text = '0x3'
-        #
-        # # Resistance 1
-        # if self.comboBox_8.currentIndex() == 0:
-        #     root[6][4].text = '0x0'
-        # if self.comboBox_8.currentIndex() == 1:
-        #     root[6][4].text = '0x1'
-        # if self.comboBox_8.currentIndex() == 2:
-        #     root[6][4].text = '0x2'
-        # if self.comboBox_8.currentIndex() == 3:
-        #     root[6][4].text = '0x3'
-        #
-        # # Resistance 0
-        # if self.comboBox_9.currentIndex() == 0:
-        #     root[6][5].text = '0x0'
-        # if self.comboBox_9.currentIndex() == 1:
-        #     root[6][5].text = '0x1'
-        # if self.comboBox_9.currentIndex() == 2:
-        #     root[6][5].text = '0x2'
-        # if self.comboBox_9.currentIndex() == 3:
-        #     root[6][5].text = '0x3'
-        #
-        # tree_ePortTX.write('LpGBT_auto_saved.xml')
-        # tree_ePortTX.write('LpGBT_transfer.xml')
+    def function_for_reg55(self):
+        self.address = 55
+        Atten_bin = bin(self.comboBox.currentIndex()).replace("0b", "")
+        Atten_bin = Atten_bin[::-1]
+        while len(Atten_bin) < 2:
+            Atten_bin += '0'
+        Atten_bin = Atten_bin[::-1]
+
+        Cap_bin = bin(self.comboBox_2.currentIndex()).replace("0b", "")
+        Cap_bin = Cap_bin[::-1]
+        while len(Cap_bin) < 2:
+            Cap_bin += '0'
+        Cap_bin = Cap_bin[::-1]
+
+        register_bin_value = (Atten_bin + Cap_bin)
+        register_int_value = int(register_bin_value, 2)
+        print(register_bin_value)
+        # print(self.comboBox_2.currentIndex())
+
+        print("Address %s : value %s" % (self.address, register_int_value))
+        return self.address, register_int_value
+
+    def function_for_reg56(self):
+        self.address = 56
+        bin_list = []
+        Res3_bin = bin(self.comboBox_3.currentIndex()).replace("0b", "")
+        Res2_bin = bin(self.comboBox_7.currentIndex()).replace("0b", "")
+        Res1_bin = bin(self.comboBox_8.currentIndex()).replace("0b", "")
+        Res0_bin = bin(self.comboBox_9.currentIndex()).replace("0b", "")
+        Res_list = [Res3_bin, Res2_bin, Res1_bin, Res0_bin]
+        for Res in Res_list:
+            Res = Res[::-1]
+            while len(Res) < 2:
+                Res += '0'
+            Res = Res[::-1]
+            bin_list.append(Res)
+
+        register_bin_value = bin_list[0] + bin_list[1] + bin_list[2] + bin_list[3]
+        register_int_value = int(register_bin_value, 2)
+        print(register_bin_value)
+
+        print("Address %s : value %s" % (self.address, register_int_value))
+        return self.address, register_int_value
+
 
 if __name__ == "__main__":
     import sys
@@ -262,3 +207,4 @@ if __name__ == "__main__":
     ui.setupUi(Dialog)
     Dialog.show()
     sys.exit(app.exec_())
+

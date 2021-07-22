@@ -1,13 +1,21 @@
+from PyQt5.QtWidgets import *
 from PyQt5 import QtCore, QtGui, QtWidgets
 import xml.etree.ElementTree as ET
-from LpGBT_functions__two_change_setup import *
 
 
-class Ui_Dialog(object):
-    plop = 3
+class Ui_Dialog(QWidget):
 
     def __init__(self, TDC_inst):
+        super().__init__()
         self.TDC_inst = TDC_inst
+        self.delay_list = []
+        self.enable_finetune_list = []
+        self.DS_list = []
+        self.freq_list = []
+        self.PE_strength_list = []
+        self.PE_mode_list = []
+        self.PE_width_list = []
+        self.add_and_reg = []
 
     def setupUi(self, Dialog):
         tree_ePortTX = ET.parse('LpGBT_transfer.xml')
@@ -46,6 +54,9 @@ class Ui_Dialog(object):
             self.combobox.addItem("640")
             self.combobox.addItem("1280")
             self.gridLayout.addWidget(self.combobox, row + 1, column + 1, 1, 1)
+            self.freq_list.append(self.combobox)
+            self.combobox.address = 92 + 3*i
+            self.combobox.currentIndexChanged.connect(self.return_byte)
 
             self.label_3 = QtWidgets.QLabel(self.gridLayoutWidget)
             self.label_3.setText("Fine Tune")
@@ -53,6 +64,9 @@ class Ui_Dialog(object):
 
             self.checkbox = QtWidgets.QCheckBox(self.gridLayoutWidget)
             self.gridLayout.addWidget(self.checkbox, row + 2, column + 1, 1, 1)
+            self.checkbox.address = 92 + 3*i
+            self.enable_finetune_list.append(self.checkbox)
+            self.checkbox.clicked.connect(self.return_byte)
 
             self.label_2 = QtWidgets.QLabel(self.gridLayoutWidget)
             self.label_2.setText("Delay")
@@ -61,6 +75,10 @@ class Ui_Dialog(object):
             self.lineEdit = QtWidgets.QLineEdit(self.gridLayoutWidget)
             self.lineEdit.setText('00000000')
             self.gridLayout.addWidget(self.lineEdit, row + 3, column + 1, 1, 1)
+            self.delay_list.append(self.lineEdit)
+            self.lineEdit.address = 92 + 3*i
+            # self.lineEdit.textChanged.connect(self.return_byte)
+            self.lineEdit.textChanged.connect(self.return_byte_2)
 
             self.label_4 = QtWidgets.QLabel(self.gridLayoutWidget)
             self.label_4.setText("Drive Strength")
@@ -76,6 +94,9 @@ class Ui_Dialog(object):
             self.combobox_2.addItem("3.5")
             self.combobox_2.addItem("4.0")
             self.gridLayout.addWidget(self.combobox_2, row + 4, column + 1, 1, 1)
+            self.DS_list.append(self.combobox_2)
+            self.combobox_2.address = 92 + 3*i
+            self.combobox_2.currentIndexChanged.connect(self.return_byte)
 
             self.label_6 = QtWidgets.QLabel(self.gridLayoutWidget)
             self.label_6.setText("PE Strength")
@@ -91,6 +112,9 @@ class Ui_Dialog(object):
             self.combobox_3.addItem("3.5")
             self.combobox_3.addItem("4.0")
             self.gridLayout.addWidget(self.combobox_3, row + 5, column + 1, 1, 1)
+            self.PE_strength_list.append(self.combobox_3)
+            self.combobox_3.address = 94 + 3*i
+            self.combobox_3.currentIndexChanged.connect(self.return_byte_3)
 
             self.label_7 = QtWidgets.QLabel(self.gridLayoutWidget)
             self.label_7.setText("PE Mode")
@@ -102,6 +126,9 @@ class Ui_Dialog(object):
             self.combobox_4.addItem("self timed")
             self.combobox_4.addItem("clock timed")
             self.gridLayout.addWidget(self.combobox_4, row + 6, column + 1, 1, 1)
+            self.PE_mode_list.append(self.combobox_4)
+            self.combobox_4.address = 94 + 3*i
+            self.combobox_4.currentIndexChanged.connect(self.return_byte_3)
 
             self.label_8 = QtWidgets.QLabel(self.gridLayoutWidget)
             self.label_8.setText("PE Width")
@@ -117,6 +144,9 @@ class Ui_Dialog(object):
             self.combobox_5.addItem("840")
             self.combobox_5.addItem("960")
             self.gridLayout.addWidget(self.combobox_5, row + 7, column + 1, 1, 1)
+            self.PE_width_list.append(self.combobox_5)
+            self.combobox_5.address = 94 + 3 * i
+            self.combobox_5.currentIndexChanged.connect(self.return_byte_3)
 
             self.label_9 = QtWidgets.QLabel(self.gridLayoutWidget)
             self.label_9.setText("  ")
@@ -151,500 +181,181 @@ class Ui_Dialog(object):
         self.horizontalLayout.addWidget(self.pushButton_3)
         self.pushButton_3.clicked.connect(Dialog.reject)
 
+    def return_byte(self):
+        sender = self.sender()
+        address = sender.address
+
+        for delay, finetune, DS, freq in zip(self.delay_list, self.enable_finetune_list, self.DS_list, self.freq_list):
+            if sender in (delay, finetune, DS, freq):
+                if finetune.isChecked():
+                    finetune_bin = 1
+                else:
+                    finetune_bin = 0
+
+                freq_bin = bin(freq.currentIndex()).replace("0b", "")
+                freq_bin = freq_bin[::-1]
+                while len(freq_bin) < 3:
+                    freq_bin += '0'
+                freq_bin = freq_bin[::-1]
+
+                DS_bin = bin(DS.currentIndex()).replace("0b", "")
+                DS_bin = DS_bin[::-1]
+                while len(DS_bin) < 3:
+                    DS_bin += '0'
+                DS_bin = DS_bin[::-1]
+
+                delay_bin = delay.text()
+                delay_bin = delay_bin[::-1]
+                while len(delay_bin) < 8:
+                    delay_bin += '0'
+                delay_bin = delay_bin[::-1]
+                delay_bin_0 = delay_bin[0]
+
+                register_bin_value = (str(delay_bin_0) + str(finetune_bin) + DS_bin + freq_bin)
+                register_int_value = int(register_bin_value, 2)
+                # print(register_bin_value)
+                print("%s, %s" % (address, register_int_value))
+
+                return address, register_int_value
+
+    def return_byte_2(self):
+        sender = self.sender()
+        address = sender.address + 1
+        for delay in self.delay_list:
+            if sender == delay:
+                delay_bin = delay.text()
+                delay_bin = delay_bin[::-1]
+                while len(delay_bin) < 8:
+                    delay_bin += '0'
+                delay_bin = delay_bin[::-1]
+
+                register_bin_value = str(delay_bin)
+                register_int_value = int(register_bin_value, 2)
+                print("%s, %s" % (address, register_int_value))
+
+                return address, register_int_value
+
+    def return_byte_3(self):
+        sender = self.sender()
+        address = sender.address
+
+        for PE_s, PE_m, PE_w in zip(self.PE_strength_list, self.PE_mode_list, self.PE_width_list):
+            if sender in (PE_s, PE_m, PE_w):
+                PE_s_bin = bin(PE_s.currentIndex()).replace("0b", "")
+                PE_s_bin = PE_s_bin[::-1]
+                while len(PE_s_bin) < 3:
+                    PE_s_bin += '0'
+                PE_s_bin = PE_s_bin[::-1]
+
+                PE_m_bin = bin(PE_m.currentIndex()).replace("0b", "")
+                PE_m_bin = PE_m_bin[::-1]
+                while len(PE_m_bin) < 2:
+                    PE_m_bin += '0'
+                PE_m_bin = PE_m_bin[::-1]
+                print(PE_m_bin)
+
+                PE_w_bin = bin(PE_w.currentIndex()).replace("0b", "")
+                PE_w_bin = PE_w_bin[::-1]
+                while len(PE_w_bin) < 3:
+                    PE_w_bin += '0'
+                PE_w_bin = PE_w_bin[::-1]
+
+                register_bin_value = (PE_s_bin + PE_m_bin + PE_w_bin)
+                register_int_value = int(register_bin_value, 2)
+                # print(register_bin_value)
+                print("%s, %s" % (address, register_int_value))
+
+                return address, register_int_value
+
     def save(self):
-        self.PSCLK = 5
-        self.clocks = 4
-        row = 0
-        column = 0
-
-        delay_val = 0
-        fine_tune_val = 1
-        DS_val = 2
-        freq_val = 3
-        PE_strength_val = 4
-        PE_mode_val = 5
-        PE_width_val = 6
-
-        self.freq_data = []
-        self.fine_tune_data = []
-        self.delay_data = []
-        self.DS_data = []
-        self.PE_strength_data = []
-        self.PE_mode_data = []
-        self.PE_width_data = []
-
-        for i in range(self.clocks):
-            if column == 6:
-                column = 0
-                row += 9
-
-            freq_box = self.gridLayout.itemAtPosition(row + 1, column + 1).widget()
-            self.freq_data.append([self.PSCLK, i, freq_val, freq_box.currentIndex()])
-
-            fine_tune_box = self.gridLayout.itemAtPosition(row + 2, column + 1).widget()
-            if fine_tune_box.isChecked():
-                self.fine_tune_data.append([self.PSCLK, i, fine_tune_val, '1'])
+        i = 0
+        for delay, finetune, DS, freq in zip(self.delay_list, self.enable_finetune_list, self.DS_list, self.freq_list):
+            address = 92 + 3*i
+            if finetune.isChecked():
+                finetune_bin = 1
             else:
-                self.fine_tune_data.append([self.PSCLK, i, fine_tune_val, '0'])
+                finetune_bin = 0
 
-            delay_box = self.gridLayout.itemAtPosition(row + 3, column + 1).widget()
-            self.delay_data.append([self.PSCLK, i, delay_val, delay_box.text()])
+            freq_bin = bin(freq.currentIndex()).replace("0b", "")
+            freq_bin = freq_bin[::-1]
+            while len(freq_bin) < 3:
+                freq_bin += '0'
+            freq_bin = freq_bin[::-1]
 
-            drive_strength_box = self.gridLayout.itemAtPosition(row + 4, column + 1).widget()
-            self.DS_data.append([self.PSCLK, i, DS_val, drive_strength_box.currentIndex()])
+            DS_bin = bin(DS.currentIndex()).replace("0b", "")
+            DS_bin = DS_bin[::-1]
+            while len(DS_bin) < 3:
+                DS_bin += '0'
+            DS_bin = DS_bin[::-1]
 
-            PE_strength_box = self.gridLayout.itemAtPosition(row + 5, column + 1).widget()
-            self.PE_strength_data.append([self.PSCLK, i, PE_strength_val, PE_strength_box.currentIndex()])
+            delay_bin = delay.text()
+            delay_bin = delay_bin[::-1]
+            while len(delay_bin) < 8:
+                delay_bin += '0'
+            delay_bin = delay_bin[::-1]
+            delay_bin_0 = delay_bin[0]
 
-            PE_mode_box = self.gridLayout.itemAtPosition(row + 6 , column + 1).widget()
-            self.PE_mode_data.append([self.PSCLK, i, PE_mode_val, PE_mode_box.currentIndex()])
+            register_bin_value = (str(delay_bin_0) + str(finetune_bin) + DS_bin + freq_bin)
+            register_int_value = int(register_bin_value, 2)
+            i += 1
 
-            PE_width_box = self.gridLayout.itemAtPosition(row + 7, column + 1).widget()
-            self.PE_width_data.append([self.PSCLK, i, PE_width_val, PE_width_box.currentIndex()])
+            print("%s, %s" % (address, register_int_value))
+            self.add_and_reg.append([address, register_int_value])
 
-            column += 3
+        # delay total register! Check on this again to be sure
+        i = 0
+        for delay in self.delay_list:
+            address = 93 + 3*i
+            delay_bin = delay.text()
+            delay_bin = delay_bin[::-1]
+            while len(delay_bin) < 8:
+                delay_bin += '0'
+            delay_bin = delay_bin[::-1]
 
-        for freq, fine_tune, delay, DS, PE_S, PE_m, PE_w in zip(self.freq_data, self.fine_tune_data, self.delay_data,
-                                                                self.DS_data, self.PE_strength_data, self.PE_mode_data,
-                                                                self.PE_width_data):
-            function(delay[0], delay[1], delay[2], delay[3])
-            function(fine_tune[0], fine_tune[1], fine_tune[2], fine_tune[3])
-            function(DS[0], DS[1], DS[2], DS[3])
-            function(freq[0], freq[1], freq[2], freq[3])
+            register_bin_value = str(delay_bin)
+            register_int_value = int(register_bin_value, 2)
+            print(register_bin_value)
+            print("%s, %s" % (address, register_int_value))
+            self.add_and_reg.append([address, register_int_value])
 
-            function(PE_S[0], PE_S[1], PE_S[2], PE_S[3])
-            function(PE_m[0], PE_m[1], PE_m[2], PE_m[3])
-            function(PE_w[0], PE_w[1], PE_w[2], PE_w[3])
-            print("clock done")
+            i += 1
+        # return address, register_int_value
+        i = 0
+        for PE_s, PE_m, PE_w in zip(self.PE_strength_list, self.PE_mode_list, self.PE_width_list):
+            address = 94 + 3*i
+            PE_s_bin = bin(PE_s.currentIndex()).replace("0b", "")
+            PE_s_bin = PE_s_bin[::-1]
+            while len(PE_s_bin) < 3:
+                PE_s_bin += '0'
+            PE_s_bin = PE_s_bin[::-1]
 
-        # print(add_and_reg)
-        # print(sorted(add_and_reg, key=itemgetter(0)))
-        post_function()
+            PE_m_bin = bin(PE_m.currentIndex()).replace("0b", "")
+            PE_m_bin = PE_m_bin[::-1]
+            while len(PE_m_bin) < 2:
+                PE_m_bin += '0'
+            PE_m_bin = PE_m_bin[::-1]
 
+            PE_w_bin = bin(PE_w.currentIndex()).replace("0b", "")
+            PE_w_bin = PE_w_bin[::-1]
+            while len(PE_w_bin) < 3:
+                PE_w_bin += '0'
+            PE_w_bin = PE_w_bin[::-1]
 
-    #     ############# xml file loading ####################
-    #     # Fine Tune
-    #     PS_FineTune_List = [self.checkBox, self.checkBox_2, self.checkBox_3, self.checkBox_4]
-    #     i = 0
-    #     for PS_FineTune in PS_FineTune_List:
-    #         if root[5][i][0].text == '0x1':
-    #             PS_FineTune.setChecked(True)
-    #         else:
-    #             PS_FineTune.setChecked(False)
-    #         i += 1
-    #
-    #     # Frequency
-    #     PS_Freq_list = [self.comboBox, self.comboBox_6, self.comboBox_11, self.comboBox_16]
-    #     i = 0
-    #     for PS_Freq in PS_Freq_list:
-    #         if root[5][i][1].text == '0x0':
-    #             PS_Freq.setCurrentIndex(0)
-    #         if root[5][i][1].text == '0x1':
-    #             PS_Freq.setCurrentIndex(1)
-    #         if root[5][i][1].text == '0x2':
-    #             PS_Freq.setCurrentIndex(2)
-    #         if root[5][i][1].text == '0x3':
-    #             PS_Freq.setCurrentIndex(3)
-    #         if root[5][i][1].text == '0x4':
-    #             PS_Freq.setCurrentIndex(4)
-    #         if root[5][i][1].text == '0x5':
-    #             PS_Freq.setCurrentIndex(5)
-    #         if root[5][i][1].text == '0x6':
-    #             PS_Freq.setCurrentIndex(6)
-    #         i += 1
-    #
-    #     # Delay (come back to!)
-    #     ### This is the one where ther are issues
-    #     ##with figuiring out how to fill with a text box thing
-    #     self.lineEdit.setText(root[5][0][2].text)
-    #     self.lineEdit_2.setText(root[5][1][2].text)
-    #     self.lineEdit_3.setText(root[5][2][2].text)
-    #     self.lineEdit_4.setText(root[5][3][2].text)
-    #
-    #     # PE Strength
-    #     PE_strength_list = [self.comboBox_2, self.comboBox_7, self.comboBox_12, self.comboBox_17]
-    #     i = 0
-    #     for PE_strength in PE_strength_list:
-    #         if root[5][i][3].text == '0x0':
-    #             PE_strength.setCurrentIndex(0)
-    #         if root[5][i][3].text == '0x1':
-    #             PE_strength.setCurrentIndex(1)
-    #         if root[5][i][3].text == '0x2':
-    #             PE_strength.setCurrentIndex(2)
-    #         if root[5][i][3].text == '0x3':
-    #             PE_strength.setCurrentIndex(3)
-    #         if root[5][i][3].text == '0x4':
-    #             PE_strength.setCurrentIndex(4)
-    #         if root[5][i][3].text == '0x5':
-    #             PE_strength.setCurrentIndex(5)
-    #         if root[5][i][3].text == '0x6':
-    #             PE_strength.setCurrentIndex(6)
-    #         if root[5][i][3].text == '0x7':
-    #             PE_strength.setCurrentIndex(7)
-    #         i += 1
-    #
-    #     # PE Mode
-    #     PE_Mode_list = [self.comboBox_3, self.comboBox_8, self.comboBox_13, self.comboBox_18]
-    #     i = 0
-    #     for PE_Mode in PE_Mode_list:
-    #         if root[5][i][4].text == '0x0':
-    #             PE_Mode.setCurrentIndex(0)
-    #         if root[5][i][4].text == '0x2':
-    #             PE_Mode.setCurrentIndex(1)
-    #         if root[5][i][4].text == '0x3':
-    #             PE_Mode.setCurrentIndex(2)
-    #         i += 1
-    #
-    #     # PE_width
-    #     PE_width_list = [self.comboBox_4, self.comboBox_9, self.comboBox_14, self.comboBox_19]
-    #     i = 0
-    #     for PE_width in PE_width_list:
-    #         if root[5][i][5].text == '0x0':
-    #             PE_width.setCurrentIndex(0)
-    #         if root[5][i][5].text == '0x1':
-    #             PE_width.setCurrentIndex(1)
-    #         if root[5][i][5].text == '0x2':
-    #             PE_width.setCurrentIndex(2)
-    #         if root[5][i][5].text == '0x3':
-    #             PE_width.setCurrentIndex(3)
-    #         if root[5][i][5].text == '0x4':
-    #             PE_width.setCurrentIndex(4)
-    #         if root[5][i][5].text == '0x5':
-    #             PE_width.setCurrentIndex(5)
-    #         if root[5][i][5].text == '0x6':
-    #             PE_width.setCurrentIndex(6)
-    #         if root[5][i][5].text == '0x7':
-    #             PE_width.setCurrentIndex(7)
-    #         i += 1
-    #
-    #     # Drive strength
-    #     Drive_strength_list = [self.comboBox_5, self.comboBox_10, self.comboBox_15, self.comboBox_20]
-    #     i = 0
-    #     for Drive_strength in Drive_strength_list:
-    #         if root[5][i][6].text == '0x0':
-    #             Drive_strength.setCurrentIndex(0)
-    #         if root[5][i][6].text == '0x1':
-    #             Drive_strength.setCurrentIndex(1)
-    #         if root[5][i][6].text == '0x2':
-    #             Drive_strength.setCurrentIndex(2)
-    #         if root[5][i][6].text == '0x3':
-    #             Drive_strength.setCurrentIndex(3)
-    #         if root[5][i][6].text == '0x4':
-    #             Drive_strength.setCurrentIndex(4)
-    #         if root[5][i][6].text == '0x5':
-    #             Drive_strength.setCurrentIndex(5)
-    #         if root[5][i][6].text == '0x6':
-    #             Drive_strength.setCurrentIndex(6)
-    #         if root[5][i][6].text == '0x7':
-    #             Drive_strength.setCurrentIndex(7)
-    #         i += 1
-    #
-    #     ###################################################
-    #
-    #     self.retranslateUi(Dialog)
-    #     QtCore.QMetaObject.connectSlotsByName(Dialog)
-    #
-    # def retranslateUi(self, Dialog):
-    #     _translate = QtCore.QCoreApplication.translate
-    #     Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
-    #     self.label.setText(_translate("Dialog", "PS0 "))
-    #     self.label_4.setText(_translate("Dialog", "Delay"))
-    #     self.label_3.setText(_translate("Dialog", "Frequency "))
-    #     self.label_2.setText(_translate("Dialog", "Fine Tune"))
-    #     self.label_5.setText(_translate("Dialog", "PE Strength"))
-    #     self.label_6.setText(_translate("Dialog", "PE Mode"))
-    #     self.comboBox.setItemText(0, _translate("Dialog", "disabled"))
-    #     self.comboBox.setItemText(1, _translate("Dialog", "40"))
-    #     self.comboBox.setItemText(2, _translate("Dialog", "80"))
-    #     self.comboBox.setItemText(3, _translate("Dialog", "160"))
-    #     self.comboBox.setItemText(4, _translate("Dialog", "320"))
-    #     self.comboBox.setItemText(5, _translate("Dialog", "640"))
-    #     self.comboBox.setItemText(6, _translate("Dialog", "1280"))
-    #     self.label_7.setText(_translate("Dialog", "PE Width"))
-    #     self.label_8.setText(_translate("Dialog", "Drive Strength"))
-    #     self.comboBox_2.setItemText(0, _translate("Dialog", "0"))
-    #     self.comboBox_2.setItemText(1, _translate("Dialog", "1.0"))
-    #     self.comboBox_2.setItemText(2, _translate("Dialog", "1.5"))
-    #     self.comboBox_2.setItemText(3, _translate("Dialog", "2.0"))
-    #     self.comboBox_2.setItemText(4, _translate("Dialog", "2.5"))
-    #     self.comboBox_2.setItemText(5, _translate("Dialog", "3.0"))
-    #     self.comboBox_2.setItemText(6, _translate("Dialog", "3.5"))
-    #     self.comboBox_2.setItemText(7, _translate("Dialog", "4.0"))
-    #     self.comboBox_3.setItemText(0, _translate("Dialog", "disabled"))
-    #     self.comboBox_3.setItemText(1, _translate("Dialog", "self timed"))
-    #     self.comboBox_3.setItemText(2, _translate("Dialog", "clock timed"))
-    #     self.comboBox_4.setItemText(0, _translate("Dialog", "120"))
-    #     self.comboBox_4.setItemText(1, _translate("Dialog", "240"))
-    #     self.comboBox_4.setItemText(2, _translate("Dialog", "360"))
-    #     self.comboBox_4.setItemText(3, _translate("Dialog", "480"))
-    #     self.comboBox_4.setItemText(4, _translate("Dialog", "600"))
-    #     self.comboBox_4.setItemText(5, _translate("Dialog", "720"))
-    #     self.comboBox_4.setItemText(6, _translate("Dialog", "840"))
-    #     self.comboBox_4.setItemText(7, _translate("Dialog", "960"))
-    #     self.comboBox_5.setItemText(0, _translate("Dialog", "0"))
-    #     self.comboBox_5.setItemText(1, _translate("Dialog", "1.0"))
-    #     self.comboBox_5.setItemText(2, _translate("Dialog", "1.5"))
-    #     self.comboBox_5.setItemText(3, _translate("Dialog", "2.0"))
-    #     self.comboBox_5.setItemText(4, _translate("Dialog", "2.5"))
-    #     self.comboBox_5.setItemText(5, _translate("Dialog", "3.0"))
-    #     self.comboBox_5.setItemText(6, _translate("Dialog", "3.5"))
-    #     self.comboBox_5.setItemText(7, _translate("Dialog", "4.0"))
-    #     self.pushButton.setText(_translate("Dialog", "Apply"))
-    #     self.pushButton_2.setText(_translate("Dialog", "OK"))
-    #     self.pushButton_3.setText(_translate("Dialog", "Cancel"))
-    #     self.label_9.setText(_translate("Dialog", "PS1"))
-    #     self.label_10.setText(_translate("Dialog", "Delay"))
-    #     self.label_11.setText(_translate("Dialog", "Frequency "))
-    #     self.label_12.setText(_translate("Dialog", "Fine Tune"))
-    #     self.label_13.setText(_translate("Dialog", "PE Strength"))
-    #     self.label_14.setText(_translate("Dialog", "PE Mode"))
-    #     self.comboBox_6.setItemText(0, _translate("Dialog", "disabled"))
-    #     self.comboBox_6.setItemText(1, _translate("Dialog", "40"))
-    #     self.comboBox_6.setItemText(2, _translate("Dialog", "80"))
-    #     self.comboBox_6.setItemText(3, _translate("Dialog", "160"))
-    #     self.comboBox_6.setItemText(4, _translate("Dialog", "320"))
-    #     self.comboBox_6.setItemText(5, _translate("Dialog", "640"))
-    #     self.comboBox_6.setItemText(6, _translate("Dialog", "1280"))
-    #     self.label_15.setText(_translate("Dialog", "PE Width"))
-    #     self.label_16.setText(_translate("Dialog", "Drive Strength"))
-    #     self.comboBox_7.setItemText(0, _translate("Dialog", "0"))
-    #     self.comboBox_7.setItemText(1, _translate("Dialog", "1.0"))
-    #     self.comboBox_7.setItemText(2, _translate("Dialog", "1.5"))
-    #     self.comboBox_7.setItemText(3, _translate("Dialog", "2.0"))
-    #     self.comboBox_7.setItemText(4, _translate("Dialog", "2.5"))
-    #     self.comboBox_7.setItemText(5, _translate("Dialog", "3.0"))
-    #     self.comboBox_7.setItemText(6, _translate("Dialog", "3.5"))
-    #     self.comboBox_7.setItemText(7, _translate("Dialog", "4.0"))
-    #     self.comboBox_8.setItemText(0, _translate("Dialog", "disabled"))
-    #     self.comboBox_8.setItemText(1, _translate("Dialog", "self timed"))
-    #     self.comboBox_8.setItemText(2, _translate("Dialog", "clock timed"))
-    #     self.comboBox_9.setItemText(0, _translate("Dialog", "120"))
-    #     self.comboBox_9.setItemText(1, _translate("Dialog", "240"))
-    #     self.comboBox_9.setItemText(2, _translate("Dialog", "360"))
-    #     self.comboBox_9.setItemText(3, _translate("Dialog", "480"))
-    #     self.comboBox_9.setItemText(4, _translate("Dialog", "600"))
-    #     self.comboBox_9.setItemText(5, _translate("Dialog", "720"))
-    #     self.comboBox_9.setItemText(6, _translate("Dialog", "840"))
-    #     self.comboBox_9.setItemText(7, _translate("Dialog", "960"))
-    #     self.comboBox_10.setItemText(0, _translate("Dialog", "0"))
-    #     self.comboBox_10.setItemText(1, _translate("Dialog", "1.0"))
-    #     self.comboBox_10.setItemText(2, _translate("Dialog", "1.5"))
-    #     self.comboBox_10.setItemText(3, _translate("Dialog", "2.0"))
-    #     self.comboBox_10.setItemText(4, _translate("Dialog", "2.5"))
-    #     self.comboBox_10.setItemText(5, _translate("Dialog", "3.0"))
-    #     self.comboBox_10.setItemText(6, _translate("Dialog", "3.5"))
-    #     self.comboBox_10.setItemText(7, _translate("Dialog", "4.0"))
-    #     self.label_17.setText(_translate("Dialog", "PS2"))
-    #     self.label_18.setText(_translate("Dialog", "Delay"))
-    #     self.label_19.setText(_translate("Dialog", "Frequency "))
-    #     self.label_20.setText(_translate("Dialog", "Fine Tune"))
-    #     self.label_21.setText(_translate("Dialog", "PE Strength"))
-    #     self.label_22.setText(_translate("Dialog", "PE Mode"))
-    #     self.comboBox_11.setItemText(0, _translate("Dialog", "disabled"))
-    #     self.comboBox_11.setItemText(1, _translate("Dialog", "40"))
-    #     self.comboBox_11.setItemText(2, _translate("Dialog", "80"))
-    #     self.comboBox_11.setItemText(3, _translate("Dialog", "160"))
-    #     self.comboBox_11.setItemText(4, _translate("Dialog", "320"))
-    #     self.comboBox_11.setItemText(5, _translate("Dialog", "640"))
-    #     self.comboBox_11.setItemText(6, _translate("Dialog", "1280"))
-    #     self.label_23.setText(_translate("Dialog", "PE Width"))
-    #     self.label_24.setText(_translate("Dialog", "Drive Strength"))
-    #     self.comboBox_12.setItemText(0, _translate("Dialog", "0"))
-    #     self.comboBox_12.setItemText(1, _translate("Dialog", "1.0"))
-    #     self.comboBox_12.setItemText(2, _translate("Dialog", "1.5"))
-    #     self.comboBox_12.setItemText(3, _translate("Dialog", "2.0"))
-    #     self.comboBox_12.setItemText(4, _translate("Dialog", "2.5"))
-    #     self.comboBox_12.setItemText(5, _translate("Dialog", "3.0"))
-    #     self.comboBox_12.setItemText(6, _translate("Dialog", "3.5"))
-    #     self.comboBox_12.setItemText(7, _translate("Dialog", "4.0"))
-    #     self.comboBox_13.setItemText(0, _translate("Dialog", "disabled"))
-    #     self.comboBox_13.setItemText(1, _translate("Dialog", "self timed"))
-    #     self.comboBox_13.setItemText(2, _translate("Dialog", "clock timed"))
-    #     self.comboBox_14.setItemText(0, _translate("Dialog", "120"))
-    #     self.comboBox_14.setItemText(1, _translate("Dialog", "240"))
-    #     self.comboBox_14.setItemText(2, _translate("Dialog", "360"))
-    #     self.comboBox_14.setItemText(3, _translate("Dialog", "480"))
-    #     self.comboBox_14.setItemText(4, _translate("Dialog", "600"))
-    #     self.comboBox_14.setItemText(5, _translate("Dialog", "720"))
-    #     self.comboBox_14.setItemText(6, _translate("Dialog", "840"))
-    #     self.comboBox_14.setItemText(7, _translate("Dialog", "960"))
-    #     self.comboBox_15.setItemText(0, _translate("Dialog", "0"))
-    #     self.comboBox_15.setItemText(1, _translate("Dialog", "1.0"))
-    #     self.comboBox_15.setItemText(2, _translate("Dialog", "1.5"))
-    #     self.comboBox_15.setItemText(3, _translate("Dialog", "2.0"))
-    #     self.comboBox_15.setItemText(4, _translate("Dialog", "2.5"))
-    #     self.comboBox_15.setItemText(5, _translate("Dialog", "3.0"))
-    #     self.comboBox_15.setItemText(6, _translate("Dialog", "3.5"))
-    #     self.comboBox_15.setItemText(7, _translate("Dialog", "4.0"))
-    #     self.label_25.setText(_translate("Dialog", "PS3"))
-    #     self.label_26.setText(_translate("Dialog", "Delay"))
-    #     self.label_27.setText(_translate("Dialog", "Frequency "))
-    #     self.label_28.setText(_translate("Dialog", "Fine Tune"))
-    #     self.label_29.setText(_translate("Dialog", "PE Strength"))
-    #     self.label_30.setText(_translate("Dialog", "PE Mode"))
-    #     self.comboBox_16.setItemText(0, _translate("Dialog", "disabled"))
-    #     self.comboBox_16.setItemText(1, _translate("Dialog", "40"))
-    #     self.comboBox_16.setItemText(2, _translate("Dialog", "80"))
-    #     self.comboBox_16.setItemText(3, _translate("Dialog", "160"))
-    #     self.comboBox_16.setItemText(4, _translate("Dialog", "320"))
-    #     self.comboBox_16.setItemText(5, _translate("Dialog", "640"))
-    #     self.comboBox_16.setItemText(6, _translate("Dialog", "1280"))
-    #     self.label_31.setText(_translate("Dialog", "PE Width"))
-    #     self.label_32.setText(_translate("Dialog", "Drive Strength"))
-    #     self.comboBox_17.setItemText(0, _translate("Dialog", "0"))
-    #     self.comboBox_17.setItemText(1, _translate("Dialog", "1.0"))
-    #     self.comboBox_17.setItemText(2, _translate("Dialog", "1.5"))
-    #     self.comboBox_17.setItemText(3, _translate("Dialog", "2.0"))
-    #     self.comboBox_17.setItemText(4, _translate("Dialog", "2.5"))
-    #     self.comboBox_17.setItemText(5, _translate("Dialog", "3.0"))
-    #     self.comboBox_17.setItemText(6, _translate("Dialog", "3.5"))
-    #     self.comboBox_17.setItemText(7, _translate("Dialog", "4.0"))
-    #     self.comboBox_18.setItemText(0, _translate("Dialog", "disabled"))
-    #     self.comboBox_18.setItemText(1, _translate("Dialog", "self timed"))
-    #     self.comboBox_18.setItemText(2, _translate("Dialog", "clock timed"))
-    #     self.comboBox_19.setItemText(0, _translate("Dialog", "120"))
-    #     self.comboBox_19.setItemText(1, _translate("Dialog", "240"))
-    #     self.comboBox_19.setItemText(2, _translate("Dialog", "360"))
-    #     self.comboBox_19.setItemText(3, _translate("Dialog", "480"))
-    #     self.comboBox_19.setItemText(4, _translate("Dialog", "600"))
-    #     self.comboBox_19.setItemText(5, _translate("Dialog", "720"))
-    #     self.comboBox_19.setItemText(6, _translate("Dialog", "840"))
-    #     self.comboBox_19.setItemText(7, _translate("Dialog", "960"))
-    #     self.comboBox_20.setItemText(0, _translate("Dialog", "0"))
-    #     self.comboBox_20.setItemText(1, _translate("Dialog", "1.0"))
-    #     self.comboBox_20.setItemText(2, _translate("Dialog", "1.5"))
-    #     self.comboBox_20.setItemText(3, _translate("Dialog", "2.0"))
-    #     self.comboBox_20.setItemText(4, _translate("Dialog", "2.5"))
-    #     self.comboBox_20.setItemText(5, _translate("Dialog", "3.0"))
-    #     self.comboBox_20.setItemText(6, _translate("Dialog", "3.5"))
-    #     self.comboBox_20.setItemText(7, _translate("Dialog", "4.0"))
-    #
-    # def save(self):
-    #     print("in progress")
-    #     import xml.etree.ElementTree as ET
-    #     # tree_ePortTX = ET.parse('LpGBT_auto_saved.xml')
-    #     tree_ePortTX = ET.parse('LpGBT_transfer.xml')
-    #     root = tree_ePortTX.getroot()
-    #
-    #     #Fine Tune
-    #     PS_FineTune_List = [self.checkBox, self.checkBox_2, self.checkBox_3, self.checkBox_4]
-    #     i = 0
-    #     for PS_FineTune in PS_FineTune_List:
-    #         if PS_FineTune.isChecked() == True:
-    #             root[5][i][0].text = '0x1'
-    #         else:
-    #             root[5][i][0].text = '0x0'
-    #         i += 1
-    #
-    #     #Frequency
-    #     PS_Freq_list = [self.comboBox, self.comboBox_6, self.comboBox_11, self.comboBox_16]
-    #     i = 0
-    #     for PS_Freq in PS_Freq_list:
-    #         #PS_Freq.setCurrentIndex(3)
-    #         if PS_Freq.currentIndex() == 0:
-    #             root[5][i][1].text = '0x0'
-    #         if PS_Freq.currentIndex() == 1:
-    #             root[5][i][1].text = '0x1'
-    #         if PS_Freq.currentIndex() == 2:
-    #             root[5][i][1].text = '0x2'
-    #         if PS_Freq.currentIndex() == 3:
-    #             root[5][i][1].text = '0x3'
-    #         if PS_Freq.currentIndex() == 4:
-    #             root[5][i][1].text = '0x4'
-    #         if PS_Freq.currentIndex() == 5:
-    #             root[5][i][1].text = '0x5'
-    #         if PS_Freq.currentIndex() == 6:
-    #             root[5][i][1].text = '0x6'
-    #         i += 1
-    #
-    #     #Delay (come back to!)
-    #     ### This is the one where ther are issues
-    #     ##with figuiring out what's the thing that needs to fill this/what gets read into the function!
-    #     root[5][0][2].text = self.lineEdit.text()
-    #     root[5][1][2].text = self.lineEdit_2.text()
-    #     root[5][2][2].text = self.lineEdit_3.text()
-    #     root[5][3][2].text = self.lineEdit_4.text()
-    #
-    #     #PE Strength
-    #     PE_strength_list = [self.comboBox_2, self.comboBox_7, self.comboBox_12, self.comboBox_17]
-    #     i = 0
-    #     for PE_strength in PE_strength_list:
-    #         if PE_strength.currentIndex() == 0:
-    #             root[5][i][3].text = '0x0'
-    #         if PE_strength.currentIndex() == 1:
-    #             root[5][i][3].text = '0x1'
-    #         if PE_strength.currentIndex() == 2:
-    #             root[5][i][3].text = '0x2'
-    #         if PE_strength.currentIndex() == 3:
-    #             root[5][i][3].text = '0x3'
-    #         if PE_strength.currentIndex() == 4:
-    #             root[5][i][3].text = '0x4'
-    #         if PE_strength.currentIndex() == 5:
-    #             root[5][i][3].text = '0x5'
-    #         if PE_strength.currentIndex() == 6:
-    #             root[5][i][3].text = '0x6'
-    #         if PE_strength.currentIndex() == 7:
-    #             root[5][i][3].text = '0x7'
-    #         i += 1
-    #
-    #     #PE Mode
-    #     PE_Mode_list = [self.comboBox_3, self.comboBox_8, self.comboBox_13, self.comboBox_18]
-    #     i = 0
-    #     for PE_Mode in PE_Mode_list:
-    #         if PE_Mode.currentIndex() == 0:
-    #             root[5][i][4].text = '0x0'
-    #         if PE_Mode.currentIndex() == 1:
-    #             root[5][i][4].text = '0x2'
-    #         if PE_Mode.currentIndex() == 2:
-    #             root[5][i][4].text = '0x3'
-    #         i += 1
-    #
-    #     #PE_width
-    #     PE_width_list = [self.comboBox_4, self.comboBox_9, self.comboBox_14, self.comboBox_19]
-    #     i = 0
-    #     for PE_width in PE_width_list:
-    #         if PE_width.currentIndex() == 0:
-    #             root[5][i][5].text = '0x0'
-    #         if PE_width.currentIndex() == 1:
-    #             root[5][i][5].text = '0x1'
-    #         if PE_width.currentIndex() == 2:
-    #             root[5][i][5].text = '0x2'
-    #         if PE_width.currentIndex() == 3:
-    #             root[5][i][5].text = '0x3'
-    #         if PE_width.currentIndex() == 4:
-    #             root[5][i][5].text = '0x4'
-    #         if PE_width.currentIndex() == 5:
-    #             root[5][i][5].text = '0x5'
-    #         if PE_width.currentIndex() == 6:
-    #             root[5][i][5].text = '0x6'
-    #         if PE_width.currentIndex() == 7:
-    #             root[5][i][5].text = '0x7'
-    #         i += 1
-    #
-    #     #Drive strength
-    #     Drive_strength_list = [self.comboBox_5, self.comboBox_10, self.comboBox_15, self.comboBox_20]
-    #     i = 0
-    #     for Drive_strength in Drive_strength_list:
-    #         if Drive_strength.currentIndex() == 0:
-    #             root[5][i][6].text = '0x0'
-    #         if Drive_strength.currentIndex() == 1:
-    #             root[5][i][6].text = '0x1'
-    #         if Drive_strength.currentIndex() == 2:
-    #             root[5][i][6].text = '0x2'
-    #         if Drive_strength.currentIndex() == 3:
-    #             root[5][i][6].text = '0x3'
-    #         if Drive_strength.currentIndex() == 4:
-    #             root[5][i][6].text = '0x4'
-    #         if Drive_strength.currentIndex() == 5:
-    #             root[5][i][6].text = '0x5'
-    #         if Drive_strength.currentIndex() == 6:
-    #             root[5][i][6].text = '0x6'
-    #         if Drive_strength.currentIndex() == 7:
-    #             root[5][i][6].text = '0x7'
-    #         i += 1
-    #
-    #     tree_ePortTX.write('LpGBT_auto_saved.xml')
-    #     tree_ePortTX.write('LpGBT_transfer.xml')
+            register_bin_value = (PE_s_bin + PE_m_bin + PE_w_bin)
+            register_int_value = int(register_bin_value, 2)
+            print("%s, %s" % (address, register_int_value))
+            self.add_and_reg.append([address, register_int_value])
+
+            i += 1
+
+        # getting the xml file buisness together
+        list_to_xml = sorted(self.add_and_reg, key=lambda x: (x[0]))
+        tree_ePortTX = ET.parse('registers.xml')
+        root = tree_ePortTX.getroot()
+        for register in list_to_xml:
+            root[register[0]].set('value', '%i' % register[1])
+
+        tree_ePortTX.write('registers_changed.xml')
 
 if __name__ == "__main__":
     import sys
