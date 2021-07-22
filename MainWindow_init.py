@@ -4,7 +4,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import sys
 import datetime
 import serial
-sys.path.insert(0, "../UART_py3")
+sys.path.insert(0, "./UART_py3")
 from TDCreg import *
 from CSMreg import *
 from serial_config_tdc import *
@@ -51,7 +51,7 @@ class OutLog:
 #
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
-    ser = serial.Serial(port='COM5', baudrate = 115200, bytesize = serial.EIGHTBITS,
+    ser = serial.Serial(port='/dev/ttyUSB1', baudrate = 115200, bytesize = serial.EIGHTBITS,
                         parity =serial.PARITY_EVEN, stopbits = serial.STOPBITS_ONE, timeout=0.1)
 
 

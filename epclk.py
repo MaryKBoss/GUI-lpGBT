@@ -1,6 +1,9 @@
 from PyQt5.QtWidgets import *
 from PyQt5 import QtCore, QtGui, QtWidgets
 from xml.dom import minidom
+import sys
+sys.path.insert(0, "./UART_py3")
+from TDC_config_low_level_function import *
 
 class Ui_Dialog(QWidget):
 
@@ -213,6 +216,7 @@ class Ui_Dialog(QWidget):
                 # print(register_int_value)
 
                 print("Address %s : value %s" % (address, register_int_value))
+                lpgbt_config_single_write(self.TDC_inst.ser,117,address,register_int_value)
                 return address, register_int_value
 
     def return_byte_2(self):        # This works for all PE_strength, PS_mode, and PE_width registers
@@ -250,6 +254,7 @@ class Ui_Dialog(QWidget):
                 # print(register_int_value)
 
                 print("Address %s : value %s" % (address, register_int_value))
+                lpgbt_config_single_write(self.TDC_inst.ser, 117, address, register_int_value)
                 return address, register_int_value
 
 ##############################################################################################################

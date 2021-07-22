@@ -27,7 +27,7 @@ from chip_mode import Ui_Dialog as Form_22
 from Transmitter_mode import Ui_Dialog as Form_23
 
 # import UART functions
-sys.path.insert(0, "../UART_py3")
+sys.path.insert(0, "./UART_py3")
 
 from serial_config_tdc import *
 from TDCreg import *

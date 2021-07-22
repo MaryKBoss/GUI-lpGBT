@@ -132,7 +132,7 @@ class TDCreg(object):
         self.ePllRes = ['0010']
         self.ePllIcp = ['0100']
         self.ePllCap = ['10']
-        self.ePLL_control = [self.phase_clk160 , self.phase_clk320_0 , self.phase_clk320_1 , self.phase_clk320_2 , self.ePllRes , self.ePllIcp , self.ePllCap, self.ePllRes , self.ePllIcp , self.ePllCap,self.ePllRes , self.ePllIcp , self.ePllCap]
+        self.ePLL_control = [self.phase_clk160 , self.phase_clk320_0 , self.phase_clk320_1 , self.phase_clk320_2 , self.ePllRes , self.ePllIcp , self.ePllCap,self.ePllRes , self.ePllIcp , self.ePllCap,self.ePllRes , self.ePllIcp , self.ePllCap]
         self.control_1 = self.ePLL_control
         self.control_1_indictor = ['0']
 
@@ -142,13 +142,13 @@ class TDCreg(object):
         self.control = [self.control_0 , self.control_1]
 
     def init_status_0(self):
-        self.instruction_error = ['']
-        self.CRC = ['']
+        self.instruction_error = ['0']
+        self.CRC = ['00000000000000000000000000000000']
         self.status_0 = [self.instruction_error,self.CRC]
 
     def init_status_1(self):
-        self.ePll_lock = ['']
-        self.chnl_fifo_overflow = ['']
+        self.ePll_lock = ['0']
+        self.chnl_fifo_overflow = ['000000000000000000000000']
         self.status_1 = [self.ePll_lock,self.chnl_fifo_overflow]
 
     def reset_status(self):
@@ -173,19 +173,25 @@ class TDCreg(object):
         update_reg(1,'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',self.ser)
         update_reg(2,'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',self.ser)
         update_reg(3,'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',self.ser)
-        update_config_period(0,self.ser)
+        update_config_period(1,self.ser)
         update_JTAG_inst('\x12',self.ser)
         update_bit_length(115,self.ser)
         start_action(self.ser)
         print("setup0 updated to TDC: 0x"+format(int(self.setup_0_bin_str,2),'029X'))
-        readback = ''
-        for byte in get_update_reg(3,self.ser)[4:19]:
-            readback+=format(ord(byte),'b').zfill(8)
+        readback = get_update_reg(3,self.ser)[4:19]
+        readback_bin=str_to_bin(readback,'')
         if len(readback)>0:
-            readback = readback[0:115]
-            self.setup_0_indictor[0] = '1' if readback == self.setup_0[0] else '0'
+            readback_bin = readback_bin[0:115]
+            self.setup_0_indictor[0] = '1' if readback_bin == self.setup_0_bin_str[-115:] else '0'
         else:
             print("Warning: setup0 readback blank! Please check UART connection.")
+        return readback_bin
+
+        
+        # for byte in readback:
+        #     readback_bin=format(ord(byte),'b').zfill(8)
+
+        
 
     def update_setup_1(self):
         self.setup_1_bin_str = ''.join(self.setup_1_align)
@@ -196,19 +202,19 @@ class TDCreg(object):
         update_reg(1,'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',self.ser)
         update_reg(2,'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',self.ser)
         update_reg(3,'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',self.ser)
-        update_config_period(0,self.ser)
+        update_config_period(1,self.ser)
         update_JTAG_inst('\x03',self.ser)
         update_bit_length(94,self.ser)
         start_action(self.ser)
         print("setup1 updated to TDC: 0x"+format(int(self.setup_1_bin_str,2),'024X'))
-        readback = ''
-        for byte in get_update_reg(3,self.ser)[4:16]:
-            readback+=format(ord(byte),'b').zfill(8)
+        readback = get_update_reg(3,self.ser)[4:16]
+        readback_bin=str_to_bin(readback,'')
         if len(readback)>0:
-            readback = readback[0:94]
-            self.setup_1_indictor[0] = '1' if readback == self.setup_1[0] else '0'
+            readback_bin = readback_bin[0:94]
+            self.setup_1_indictor[0] = '1' if readback_bin == self.setup_1_bin_str[-94:] else '0'
         else:
             print("Warning: setup1 readback blank! Please check UART connection.")
+        return readback_bin
 
     def update_setup_2(self):
         self.setup_2_bin_str = ''.join(self.setup_2_align)
@@ -219,19 +225,19 @@ class TDCreg(object):
         update_reg(1,'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',self.ser)
         update_reg(2,'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',self.ser)
         update_reg(3,'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',self.ser)
-        update_config_period(0,self.ser)
+        update_config_period(1,self.ser)
         update_JTAG_inst('\x14',self.ser)
         update_bit_length(36,self.ser)
         start_action(self.ser)
         print("setup2 updated to TDC: 0x"+format(int(self.setup_2_bin_str,2),'09X'))
-        readback = ''
-        for byte in get_update_reg(3,self.ser)[4:9]:
-            readback+=format(ord(byte),'b').zfill(8)
+        readback = get_update_reg(3,self.ser)[4:9]
+        readback_bin=str_to_bin(readback,'')
         if len(readback)>0:
-            readback = readback[0:36]
-            self.setup_2_indictor[0] = '1' if readback == self.setup_2[0] else '0'
+            readback_bin = readback_bin[0:36]
+            self.setup_2_indictor[0] = '1' if readback_bin == self.setup_2_bin_str[-36:] else '0'
         else:
             print("Warning: setup2 readback blank! Please check UART connection.")
+        return readback_bin
 
     def update_control_0(self):
         self.control_0_bin_str = ''.join(self.control_0_align)
@@ -242,19 +248,19 @@ class TDCreg(object):
         update_reg(1,'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',self.ser)
         update_reg(2,'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',self.ser)
         update_reg(3,'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',self.ser)
-        update_config_period(0,self.ser)
+        update_config_period(1,self.ser)
         update_JTAG_inst('\x05',self.ser)
         update_bit_length(8,self.ser)
         start_action(self.ser)
         print("control_0 updated to TDC: 0x"+format(int(self.control_0_bin_str,2),'02X'))
-        readback = ''
-        for byte in get_update_reg(3,self.ser)[4:5]:
-            readback+=format(ord(byte),'b').zfill(8)
+        readback = get_update_reg(3,self.ser)[4:5]
+        readback_bin=str_to_bin(readback,'')
         if len(readback)>0:
-            readback = readback[0:8]
-            self.control_0_indictor[0] = '1' if readback == self.control_0[0] else '0'
+            readback_bin = readback_bin[0:8]
+            self.control_0_indictor[0] = '1' if readback_bin == self.control_0_bin_str[-8:] else '0'
         else:
             print("Warning: control0 readback blank! Please check UART connection.")
+        return readback_bin
 
     def update_control_1(self):
         self.control_1_bin_str = ''.join(self.control_1_align)
@@ -265,37 +271,36 @@ class TDCreg(object):
         update_reg(1,'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',self.ser)
         update_reg(2,'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',self.ser)
         update_reg(3,'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',self.ser)
-        update_config_period(0,self.ser)
+        update_config_period(1,self.ser)
         update_JTAG_inst('\x06',self.ser)
         update_bit_length(47,self.ser)
         start_action(self.ser)
         print("control_1 updated to TDC: 0x"+format(int(self.control_1_bin_str,2),'012X'))
-        readback = ''
-        for byte in get_update_reg(3,self.ser)[4:10]:
-            readback+=format(ord(byte),'b').zfill(8)
+        readback = get_update_reg(3,self.ser)[4:10]
+        readback_bin=str_to_bin(readback,'')
         if len(readback)>0:
-            readback = readback[0:47]
-            self.control_1_indictor[0] = '1' if readback == self.control_1[0] else '0'
+            readback_bin = readback_bin[0:47]
+            self.control_1_indictor[0] = '1' if readback_bin == self.control_1_bin_str[-47:] else '0'
         else:
             print("Warning: control1 readback blank! Please check UART connection.")
+        return readback_bin
 
     def read_status_0(self):
         update_reg(0,'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',self.ser)
         update_reg(1,'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',self.ser)
         update_reg(2,'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',self.ser)
         update_reg(3,'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',self.ser)
-        update_config_period(0,self.ser)
+        update_config_period(1,self.ser)
         update_JTAG_inst('\x17',self.ser)
         update_bit_length(33,self.ser)
         start_action(self.ser)
-        readback = ''
-        for byte in get_update_reg(3,self.ser)[4:9]:
-            readback+=format(ord(byte),'b').zfill(8)
+        readback = get_update_reg(3,self.ser)[4:9]
+        readback_bin=str_to_bin(readback,'')
         if len(readback)>0:
-            readback = readback[0:33]
-            self.instruction_error[0] = readback[0]
-            self.CRC[0] = readback[1:33]
-            print("status_0 read back: 0x"+format(int(readback,2),'09X'))
+            readback_bin = readback_bin[0:33]
+            self.instruction_error[0] = readback_bin[0]
+            self.CRC[0] = readback_bin[1:33]
+            print("status_0 read back: 0x"+format(int(readback_bin,2),'09X'))
         else:
             print("Warning: status0 readback blank! Please check UART connection.")
 
@@ -304,18 +309,17 @@ class TDCreg(object):
         update_reg(1,'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',self.ser)
         update_reg(2,'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',self.ser)
         update_reg(3,'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',self.ser)
-        update_config_period(0,self.ser)
+        update_config_period(1,self.ser)
         update_JTAG_inst('\x18',self.ser)
         update_bit_length(25,self.ser)
         start_action(self.ser)
-        readback = ''
-        for byte in get_update_reg(3,self.ser)[4:8]:
-            readback+=format(ord(byte),'b').zfill(8)
+        readback = get_update_reg(3,self.ser)[4:8]
+        readback_bin=str_to_bin(readback,'')
         if len(readback)>0:
-            readback = readback[0:25]
-            self.ePll_lock[0] = readback[0]
-            self.chnl_fifo_overflow[0] = readback[1:25]
-            print("status_1 read back: 0x"+format(int(readback,2),'07X'))
+            readback_bin = readback_bin[0:25]
+            self.ePll_lock[0] = readback_bin[0]
+            self.chnl_fifo_overflow[0] = readback_bin[1:25]
+            print("status_1 read back: 0x"+format(int(readback_bin,2),'07X'))
         else:
             print("Warning: status1 readback blank! Please check UART connection.")
 
@@ -332,23 +336,41 @@ class TDCreg(object):
         self.phase_clk320_1[0]=format(clk_320_phase%16,'b').zfill(4)
         self.update_control_1()
 
-    def reselect_dline(self,correct_counter=1000):
+    def reselect_dline(self,correct_counter=10):
+
         tmp_r = self.channel_enable_r[0]
         tmp_f = self.channel_enable_f[0]
+        tmp_enable_leading = self.enable_leading[0]
+        tmp_enable_pair = self.enable_pair[0]
         print('Phase clk160   = '+str(int(self.phase_clk160[0],2)))
         print('Phase clk320_0 = '+str(int(self.phase_clk320_0[0],2)))
         print('Phase clk320_1 = '+str(int(self.phase_clk320_1[0],2)))
+        self.update_control_1()
 
         self.channel_enable_r[0] ='000000000000000000000000' # disable input to ensure 8b10b comma out
         self.channel_enable_f[0] ='000000000000000000000000'
+
+        # # K28.5
+        # self.enable_leading[0] = '0'
+        # self.enable_pair[0] = '1'        
+        # update_input_deserial_para(self.ser,correct_value_0=0x0193,correct_value_1=0x01F0,correct_counter_th=correct_counter) # correct_counter_th 20b, max 10^22-2
+        
+        # K28.1
+        self.enable_leading[0] = '1'
+        self.enable_pair[0] = '0' 
+        update_input_deserial_para(self.ser,correct_value_0=0x01B2,correct_value_1=0x01D1,correct_counter_th=correct_counter) # correct_counter_th 20b, max 10^22-2
+        
+
         self.update_setup_0()
         tdc_master_reset_1(self.ser)
         tdc_master_reset_0(self.ser)
-        update_input_deserial_para(self.ser,correct_counter_th=correct_counter) # correct_counter_th 10b, max 1022
+        
         reselect_input_deserial(self.ser)
-        time.sleep(1) # hold to ensure dline locked
+        time.sleep(1.5) # hold to ensure dline locked
         self.channel_enable_r[0] = tmp_r
         self.channel_enable_f[0] = tmp_f 
+        self.enable_leading[0] = tmp_enable_leading
+        self.enable_pair[0] = tmp_enable_pair
         self.update_setup_0()
         print("Reselect deline done!")
 
@@ -419,7 +441,6 @@ class TDCreg(object):
 
     def run_triggerless_mode(self):
         self.enable_trigger[0] = '0'
-        self.update_setup_0()
         tdc_triggerless_mode(self.ser)
 
     def run_trigger_mode(self):
@@ -428,6 +449,7 @@ class TDCreg(object):
         self.enable_direct_trigger[0] = '0'
         self.enable_direct_bunch_reset[0] = '0'
         self.enable_direct_event_reset[0] = '0'
+        tdc_trigger_mode(self.ser)
 
     def set_rising_is_leading(self):
         self.rising_is_leading[0] = '111111111111111111111111'
@@ -506,6 +528,7 @@ class TDCreg(object):
                 print("Pair time out = "+str(int(self.combine_time_out_config[0],2)*6.25)+
                 'ns, Code=0x' + format(int(self.combine_time_out_config[0],2),'03X') +', LSB=6.25ns')
         update_data_length(self.ser, self.wordbyte)
+        print("now updating data length = "+str(self.wordbyte))
 
     def set_trigger_type(self):
         if self.enable_trigger[0] == '0':  # triggerless mode
@@ -590,16 +613,16 @@ class TDCreg(object):
 
     def DAQ_init(self):
         print("//////DAQ initialization starts!//////")
-        self.reset_JTAG()
-        self.update_JTAG()
+        self.reset_JTAG()        
         self.set_FPGA_sample_rate()
-        self.reselect_dline()
+        self.reselect_dline(30000000)
+        self.update_JTAG()
         self.set_word_byte()
         self.set_trigger_type()
         self.show_channel_info()
-        self.show_packet_info()
-        self.show_TTC_info()
-        self.show_BCR_info()
+        # self.show_packet_info()
+        # self.show_TTC_info()
+        # self.show_BCR_info()
         print("//////DAQ initialization done!//////")
         
         
